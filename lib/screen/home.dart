@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
@@ -14,17 +13,51 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with WidgetsBindingObserver {
+  AppLifecycleState? _appLifecycleState;
   PhoneStateStatus status = PhoneStateStatus.NOTHING;
   bool granted = false;
-  bool _hasPermission = false;
+  // bool _hasPermission = false;
 
-  String _platformVersion = 'Unknown';
+  // String _platformVersion = 'Unknown';
   bool _isShowingWindow = false;
   bool _isUpdatedWindow = false;
   SystemWindowPrefMode prefMode = SystemWindowPrefMode.OVERLAY;
 
-  Future<bool> requestPermission() async {
+// First function to get the app running in background
+  Future<bool> _getBackgroundPermission() async {
+    bool _bgEnabled = false;
+    bool _hasPermissions = await FlutterBackground.hasPermissions;
+
+    print('Has Permission: $_hasPermissions');
+
+    if (_hasPermissions) {
+      const androidConfig = FlutterBackgroundAndroidConfig(
+        notificationTitle: "flutter_background example app",
+        notificationText:
+            "Background notification for keeping the example app running in the background",
+        notificationImportance: AndroidNotificationImportance.Default,
+        notificationIcon: AndroidResource(
+            name: 'background_icon',
+            defType: 'drawable'), // Default is ic_launcher from folder mipmap
+      );
+      bool _initialize =
+          await FlutterBackground.initialize(androidConfig: androidConfig);
+
+      print('Has Initialized $_initialize');
+
+      if (_initialize) {
+        _bgEnabled = await FlutterBackground.enableBackgroundExecution();
+
+        print('Has Enabled $_bgEnabled');
+      }
+    }
+
+    return _bgEnabled;
+  }
+
+// Used by Phone state
+  Future<bool> _requestPermission() async {
     var _status = await Permission.phone.request();
 
     switch (_status) {
@@ -38,56 +71,49 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void callBack(String tag) {
+// Used by System alert window
+  void callBackFunction(String tag) {
     WidgetsFlutterBinding.ensureInitialized();
-    print(tag);
     switch (tag) {
       case "simple_button":
-      case "updated_simple_button":
-        SystemAlertWindow.closeSystemWindow(
-            prefMode: SystemWindowPrefMode.OVERLAY);
+        print("Simple button has been clicked");
         break;
       case "focus_button":
-        print("Focus button has been called");
+        print("Focus button has been clicked");
+        break;
+      case "personal_btn":
+        print("Personal button has been clicked");
         break;
       default:
         print("OnClick event of $tag");
     }
   }
 
-  Future<void> _initPlatformState() async {
-    await SystemAlertWindow.enableLogs(true);
-    String? platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      platformVersion = await SystemAlertWindow.platformVersion;
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
+// Used by system alert window
+  // Future<void> _initPlatformState() async {
+  //   await SystemAlertWindow.enableLogs(true);
+  //   String? platformVersion;
+  //   // Platform messages may fail, so we use a try/catch PlatformException.
+  //   try {
+  //     platformVersion = await SystemAlertWindow.platformVersion;
+  //   } on PlatformException {
+  //     platformVersion = 'Failed to get platform version.';
+  //   }
+  //   // If the widget was removed from the tree while the asynchronous platform
+  //   // message was in flight, we want to discard the reply rather than calling
+  //   // setState to update our non-existent appearance.
+  //   if (!mounted) return;
+  //   setState(() {
+  //     _platformVersion = platformVersion!;
+  //   });
+  // }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion!;
-    });
-  }
-
+// Used by system alert window
   Future<void> _requestPermissions() async {
     await SystemAlertWindow.requestPermissions(prefMode: prefMode);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    if (Platform.isIOS) setStream();
-    _initPlatformState();
-    _requestPermissions();
-    SystemAlertWindow.registerOnClickListener(callBack);
-  }
-
+// Used by Phone state
   void setStream() {
     PhoneState.phoneStateStream.listen((event) {
       setState(() {
@@ -98,22 +124,7 @@ class _HomeState extends State<Home> {
     });
   }
 
-  Future _getBackgroundPermission() async {
-    const androidConfig = FlutterBackgroundAndroidConfig(
-      notificationTitle: "flutter_background example app",
-      notificationText:
-          "Background notification for keeping the example app running in the background",
-      notificationImportance: AndroidNotificationImportance.Default,
-      notificationIcon: AndroidResource(
-          name: 'background_icon',
-          defType: 'drawable'), // Default is ic_launcher from folder mipmap
-    );
-    bool success =
-        await FlutterBackground.initialize(androidConfig: androidConfig);
-
-    _hasPermission = await FlutterBackground.hasPermissions;
-  }
-
+// Used by system alert window
   void _showOverlayWindow() {
     if (!_isShowingWindow) {
       SystemWindowHeader header = SystemWindowHeader(
@@ -184,10 +195,11 @@ class _HomeState extends State<Home> {
           buttons: [
             SystemWindowButton(
               text: SystemWindowText(
-                  text: "Simple button",
-                  fontSize: 12,
-                  textColor: Color.fromRGBO(250, 139, 97, 1)),
-              tag: "simple_button",
+                text: "Send Messgae",
+                fontSize: 12,
+                textColor: const Color.fromRGBO(250, 139, 97, 1),
+              ),
+              tag: "send_message",
               padding:
                   SystemWindowPadding(left: 10, right: 10, bottom: 10, top: 10),
               width: 0,
@@ -355,6 +367,65 @@ class _HomeState extends State<Home> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    setState(() {
+      _appLifecycleState = state;
+    });
+    if (Platform.isIOS) setStream();
+    if (state == AppLifecycleState.paused) {
+      print('AppLifecycleState state: Paused');
+    }
+    if (state == AppLifecycleState.resumed) {
+      print('AppLifecycleState state: Resumed');
+    }
+    if (state == AppLifecycleState.detached) {
+      print('AppLifecycleState state: Detached');
+    }
+    if (state == AppLifecycleState.inactive) {
+      print('AppLifecycleState state: Inactive');
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+  void _callAllFunction() async {
+    bool _hasPhoneStatePermission = false;
+    bool _hasBackgroundPermission = await _getBackgroundPermission();
+    if (_hasBackgroundPermission) {
+      _hasPhoneStatePermission = await _requestPermission();
+    }
+    if (_hasPhoneStatePermission) {
+      setStream();
+    }
+    switch (status) {
+      case PhoneStateStatus.NOTHING:
+        return;
+      case PhoneStateStatus.CALL_INCOMING:
+        return;
+      case PhoneStateStatus.CALL_STARTED:
+        return;
+      case PhoneStateStatus.CALL_ENDED:
+        return;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance!.addObserver(this);
+    SystemAlertWindow.requestPermissions;
+    SystemAlertWindow.registerOnClickListener(callBackFunction);
+    if (Platform.isIOS) setStream();
+
+    _callAllFunction();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance!.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -366,21 +437,6 @@ class _HomeState extends State<Home> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (Platform.isAndroid)
-              MaterialButton(
-                child: const Text("Request permission of Phone"),
-                onPressed: !granted
-                    ? () async {
-                        bool temp = await requestPermission();
-                        setState(() {
-                          granted = temp;
-                          if (granted) {
-                            setStream();
-                          }
-                        });
-                      }
-                    : null,
-              ),
             const Text(
               "Status of call",
               style: TextStyle(fontSize: 24),
@@ -390,19 +446,6 @@ class _HomeState extends State<Home> {
               color: getColor(),
               size: 80,
             ),
-            if (Platform.isAndroid)
-              ElevatedButton(
-                onPressed: _getBackgroundPermission,
-                child: const Text('Enable Backgroudn mode'),
-              ),
-            if (Platform.isAndroid && !_hasPermission)
-              OutlinedButton(
-                onPressed: () async {
-                  await FlutterBackground.isBackgroundExecutionEnabled;
-                  await SystemAlertWindow.requestPermissions;
-                },
-                child: const Text('Has Permission'),
-              )
           ],
         ),
       ),
@@ -412,9 +455,9 @@ class _HomeState extends State<Home> {
   IconData getIcons() {
     switch (status) {
       case PhoneStateStatus.NOTHING:
+        SystemAlertWindow.closeSystemWindow();
         return Icons.clear;
       case PhoneStateStatus.CALL_INCOMING:
-        _showOverlayWindow();
         return Icons.add_call;
       case PhoneStateStatus.CALL_STARTED:
         return Icons.call;
