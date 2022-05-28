@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phone_call/screen/home.dart';
+import 'package:phone_call/screen/home_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           primarySwatch: Colors.blue,
         ),
-        home: const Home()
+        home: const HomeView()
         // const MyHomePage(title: 'Flutter Demo Home Page'),
         );
   }

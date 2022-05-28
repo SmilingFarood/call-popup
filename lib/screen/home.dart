@@ -28,29 +28,25 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Future<bool> _getBackgroundPermission() async {
     bool _bgEnabled = false;
     bool _hasPermissions = await FlutterBackground.hasPermissions;
-
     print('Has Permission: $_hasPermissions');
+    const androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: "flutter_background example app",
+      notificationText:
+          "Background notification for keeping the example app running in the background",
+      notificationImportance: AndroidNotificationImportance.Default,
+      notificationIcon: AndroidResource(
+          name: 'background_icon',
+          defType: 'drawable'), // Default is ic_launcher from folder mipmap
+    );
+    bool _initialize =
+        await FlutterBackground.initialize(androidConfig: androidConfig);
 
-    if (_hasPermissions) {
-      const androidConfig = FlutterBackgroundAndroidConfig(
-        notificationTitle: "flutter_background example app",
-        notificationText:
-            "Background notification for keeping the example app running in the background",
-        notificationImportance: AndroidNotificationImportance.Default,
-        notificationIcon: AndroidResource(
-            name: 'background_icon',
-            defType: 'drawable'), // Default is ic_launcher from folder mipmap
-      );
-      bool _initialize =
-          await FlutterBackground.initialize(androidConfig: androidConfig);
+    print('Has Initialized $_initialize');
 
-      print('Has Initialized $_initialize');
+    if (_initialize) {
+      _bgEnabled = await FlutterBackground.enableBackgroundExecution();
 
-      if (_initialize) {
-        _bgEnabled = await FlutterBackground.enableBackgroundExecution();
-
-        print('Has Enabled $_bgEnabled');
-      }
+      print('Has Enabled $_bgEnabled');
     }
 
     return _bgEnabled;
@@ -219,8 +215,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   SystemWindowPadding(left: 10, right: 10, bottom: 10, top: 10),
               height: SystemWindowButton.WRAP_CONTENT,
               decoration: SystemWindowDecoration(
-                  startColor: Color.fromRGBO(250, 139, 97, 1),
-                  endColor: Color.fromRGBO(247, 28, 88, 1),
+                  startColor: const Color.fromRGBO(250, 139, 97, 1),
+                  endColor: const Color.fromRGBO(247, 28, 88, 1),
                   borderWidth: 0,
                   borderRadius: 30.0),
             )
@@ -335,8 +331,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                   SystemWindowPadding(left: 10, right: 10, bottom: 10, top: 10),
               height: SystemWindowButton.WRAP_CONTENT,
               decoration: SystemWindowDecoration(
-                  startColor: Color.fromRGBO(250, 139, 97, 1),
-                  endColor: Color.fromRGBO(247, 28, 88, 1),
+                  startColor: const Color.fromRGBO(250, 139, 97, 1),
+                  endColor: const Color.fromRGBO(247, 28, 88, 1),
                   borderWidth: 0,
                   borderRadius: 30.0),
             )
@@ -366,45 +362,171 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     }
   }
 
+  _showOverlayWindowO() async {
+    SystemWindowHeader header = SystemWindowHeader(
+      title: SystemWindowText(
+          text: "Incoming Call", fontSize: 10, textColor: Colors.black45),
+      padding: SystemWindowPadding.setSymmetricPadding(12, 12),
+      subTitle: SystemWindowText(
+          text: "9898989899",
+          fontSize: 14,
+          fontWeight: FontWeight.BOLD,
+          textColor: Colors.black87),
+      decoration: SystemWindowDecoration(startColor: Colors.grey[100]),
+      button: SystemWindowButton(
+          text: SystemWindowText(
+              text: "Personal", fontSize: 10, textColor: Colors.black45),
+          tag: "personal_btn"),
+      buttonPosition: ButtonPosition.TRAILING,
+    );
+    SystemWindowBody body = SystemWindowBody(
+      rows: [
+        EachRow(
+          columns: [
+            EachColumn(
+              text: SystemWindowText(
+                  text: "Some body", fontSize: 12, textColor: Colors.black45),
+            ),
+          ],
+          gravity: ContentGravity.CENTER,
+        ),
+        EachRow(columns: [
+          EachColumn(
+              text: SystemWindowText(
+                  text: "Long data of the body",
+                  fontSize: 12,
+                  textColor: Colors.black87,
+                  fontWeight: FontWeight.BOLD),
+              padding: SystemWindowPadding.setSymmetricPadding(6, 8),
+              decoration: SystemWindowDecoration(
+                  startColor: Colors.black12, borderRadius: 25.0),
+              margin: SystemWindowMargin(top: 4)),
+        ], gravity: ContentGravity.CENTER),
+        EachRow(
+          columns: [
+            EachColumn(
+              text: SystemWindowText(
+                  text: "Notes", fontSize: 10, textColor: Colors.black45),
+            ),
+          ],
+          gravity: ContentGravity.LEFT,
+          margin: SystemWindowMargin(top: 8),
+        ),
+        EachRow(
+          columns: [
+            EachColumn(
+              text: SystemWindowText(
+                  text: "Some random notes.",
+                  fontSize: 13,
+                  textColor: Colors.black54,
+                  fontWeight: FontWeight.BOLD),
+            ),
+          ],
+          gravity: ContentGravity.LEFT,
+        ),
+      ],
+      padding: SystemWindowPadding(left: 16, right: 16, bottom: 12, top: 12),
+    );
+    SystemWindowFooter footer = SystemWindowFooter(
+        buttons: [
+          SystemWindowButton(
+            text: SystemWindowText(
+              text: "Send Messgae",
+              fontSize: 12,
+              textColor: const Color.fromRGBO(250, 139, 97, 1),
+            ),
+            tag: "send_message",
+            padding:
+                SystemWindowPadding(left: 10, right: 10, bottom: 10, top: 10),
+            width: 0,
+            height: SystemWindowButton.WRAP_CONTENT,
+            decoration: SystemWindowDecoration(
+                startColor: Colors.white,
+                endColor: Colors.white,
+                borderWidth: 0,
+                borderRadius: 0.0),
+          ),
+          SystemWindowButton(
+            text: SystemWindowText(
+                text: "Focus button", fontSize: 12, textColor: Colors.white),
+            tag: "focus_button",
+            width: 0,
+            padding:
+                SystemWindowPadding(left: 10, right: 10, bottom: 10, top: 10),
+            height: SystemWindowButton.WRAP_CONTENT,
+            decoration: SystemWindowDecoration(
+                startColor: const Color.fromRGBO(250, 139, 97, 1),
+                endColor: const Color.fromRGBO(247, 28, 88, 1),
+                borderWidth: 0,
+                borderRadius: 30.0),
+          )
+        ],
+        padding: SystemWindowPadding(left: 16, right: 16, bottom: 12),
+        decoration: SystemWindowDecoration(startColor: Colors.white),
+        buttonsPosition: ButtonPosition.CENTER);
+    SystemAlertWindow.showSystemWindow(
+        height: 230,
+        header: header,
+        body: body,
+        footer: footer,
+        margin: SystemWindowMargin(left: 8, right: 8, top: 200, bottom: 0),
+        gravity: SystemWindowGravity.TOP,
+        notificationTitle: "Incoming Call",
+        notificationBody: "+1 646 980 4741",
+        prefMode: prefMode);
+
+    setState(() {
+      _isShowingWindow = true;
+    });
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     setState(() {
       _appLifecycleState = state;
     });
+    // _listenToCall();
+
     if (Platform.isIOS) setStream();
     if (state == AppLifecycleState.paused) {
+      bool _enabled = FlutterBackground.isBackgroundExecutionEnabled;
+      if (_enabled) {
+        getIcons();
+      }
       print('AppLifecycleState state: Paused');
     }
     if (state == AppLifecycleState.resumed) {
+      bool _enabled = FlutterBackground.isBackgroundExecutionEnabled;
+      if (_enabled) {
+        getIcons();
+      }
       print('AppLifecycleState state: Resumed');
     }
     if (state == AppLifecycleState.detached) {
+      bool _enabled = FlutterBackground.isBackgroundExecutionEnabled;
+      if (_enabled) {
+        getIcons();
+      }
       print('AppLifecycleState state: Detached');
     }
     if (state == AppLifecycleState.inactive) {
+      bool _enabled = FlutterBackground.isBackgroundExecutionEnabled;
+      if (_enabled) {
+        getIcons();
+      }
       print('AppLifecycleState state: Inactive');
     }
     super.didChangeAppLifecycleState(state);
   }
 
-  void _callAllFunction() async {
+  void _getAllPermission() async {
     bool _hasPhoneStatePermission = false;
     bool _hasBackgroundPermission = await _getBackgroundPermission();
     if (_hasBackgroundPermission) {
       _hasPhoneStatePermission = await _requestPermission();
     }
-    if (_hasPhoneStatePermission) {
+    if (_hasPhoneStatePermission && _hasBackgroundPermission) {
       setStream();
-    }
-    switch (status) {
-      case PhoneStateStatus.NOTHING:
-        return;
-      case PhoneStateStatus.CALL_INCOMING:
-        return;
-      case PhoneStateStatus.CALL_STARTED:
-        return;
-      case PhoneStateStatus.CALL_ENDED:
-        return;
     }
   }
 
@@ -416,7 +538,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     SystemAlertWindow.registerOnClickListener(callBackFunction);
     if (Platform.isIOS) setStream();
 
-    _callAllFunction();
+    _getAllPermission();
   }
 
   @override
@@ -458,8 +580,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         SystemAlertWindow.closeSystemWindow();
         return Icons.clear;
       case PhoneStateStatus.CALL_INCOMING:
+        _showOverlayWindowO();
         return Icons.add_call;
       case PhoneStateStatus.CALL_STARTED:
+        _showOverlayWindowO();
         return Icons.call;
       case PhoneStateStatus.CALL_ENDED:
         SystemAlertWindow.closeSystemWindow();
